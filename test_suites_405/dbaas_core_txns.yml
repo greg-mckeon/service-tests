@@ -1,0 +1,52 @@
+# This test suite exercises core, generic transactions behavior. The tests in this suite, pulled
+# from 'jstests/core/txns', should be "topology agnostic". They ideally generalize to single replica
+# sets and sharded clusters. Since transactions aren't supported on MongoDB standalones in 4.0, we
+# run this set of tests in their own suite, against a 1-node replica set, to provide the most basic
+# layer of test coverage. This allows us to verify basic transaction behavior against a local node,
+# without the need to exercise data replication machinery.
+
+test_kind: js_test
+selector:
+  roots:
+  - jstests/core/txns/**/*.js
+  exclude_files:
+  - jstests/core/txns/abort_expired_transaction.js
+  - jstests/core/txns/abort_transaction_thread_does_not_block_on_locks.js
+  - jstests/core/txns/abort_transactions_on_FCV_downgrade.js
+  - jstests/core/txns/banned_txn_dbs.js
+  - jstests/core/txns/commands_not_allowed_in_txn.js
+  - jstests/core/txns/dbstats_not_blocked_by_txn.js
+  - jstests/core/txns/do_txn_atomicity.js
+  - jstests/core/txns/do_txn_basic.js
+  - jstests/core/txns/kill_cursors_in_transaction.js
+  - jstests/core/txns/kill_op_on_txn_expiry.js
+  - jstests/core/txns/kill_sessions_kills_transaction.js
+  - jstests/core/txns/multi_statement_transaction_command_args.js
+  - jstests/core/txns/multi_statement_transaction_using_api.js
+  - jstests/core/txns/no_read_concern_snapshot_outside_txn.js
+  - jstests/core/txns/only_allow_transactions_on_FCV_40.js
+  - jstests/core/txns/speculative_snapshot_includes_all_writes.js
+  - jstests/core/txns/statement_ids_accepted.js
+  - jstests/core/txns/transactions_profiling.js
+  - jstests/core/txns/transactions_profiling_with_drops.js
+  # library of functions - no tests, no need to run
+  - jstests/core/txns/libs/write_conflicts.js
+  exclude_with_any_tags:
+  - requires_replication
+  - requires_sharding
+executor:
+  archive:
+    hooks:
+  config:
+    shell_options:
+      eval: "testingReplication = true;"
+      readMode: commands
+  hooks:
+  fixture:
+    class: ReplicaSetFixture
+    mongod_options:
+      set_parameters:
+        enableTestCommands: 1
+        numInitialSyncAttempts: 1
+    # Use a 1-node replica set.
+    num_nodes: 1
